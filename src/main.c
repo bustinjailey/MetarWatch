@@ -42,9 +42,8 @@ void failed(int32_t cookie, int http_status, void* context) {
 void success(int32_t cookie, int http_status, DictionaryIterator* received, void* context) {
 	Tuple* data_tuple = dict_find(received, METAR_RESULT_KEY);
 	if(data_tuple) {
-		// The below bitwise dance is so we can actually fit our precipitation forecast.
-		char* value = data_tuple->value;
-		metar_layer_set_text(&weather_layer, *value);
+		char value = data_tuple->value;
+		metar_layer_set_text(&metar_layer, value);
 	}
 }
 
