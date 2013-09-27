@@ -13,16 +13,9 @@ void metar_layer_init(MetarLayer* metar_layer, GPoint pos) {
 	layer_add_child(&metar_layer->layer, &metar_layer->text_layer.layer);
 }
 
-void metar_layer_set_text(MetarLayer* metar_layer, char t[]) {
-	//int size = sizeof(t) / sizeof(t[0]);	
-	//memcpy(metar_layer->metar_str, t, size + 1);
-	//memcpy(metar_layer->metar_str, "test", 5);
-	//char str[5] = "test\0";
-	//text_layer_set_text(&metar_layer->text_layer, str);
-}
-
-void metar_layer_display_errortext(MetarLayer* metar_layer, char * error_text){
-	text_layer_set_text(&metar_layer->text_layer, error_text);
+void metar_layer_set_text(MetarLayer* metar_layer, char * text) {
+	memcpy(metar_layer->metar_str, text, 50);
+	text_layer_set_text(&metar_layer->text_layer, metar_layer->metar_str);
 }
 
 void metar_layer_deinit(MetarLayer* metar_layer) {

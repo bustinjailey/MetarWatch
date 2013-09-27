@@ -1,99 +1,124 @@
-#include "pebble_os.h"
-#include "pebble_app.h"
-#include "pebble_fonts.h"
 #include "time_layer.h"
 
-static uint8_t DIGIT_RESOURCES[] = {
-	RESOURCE_ID_TIME_DIGIT_ZERO,
-	RESOURCE_ID_TIME_DIGIT_ONE,
-	RESOURCE_ID_TIME_DIGIT_TWO,
-	RESOURCE_ID_TIME_DIGIT_THREE,
-	RESOURCE_ID_TIME_DIGIT_FOUR,
-	RESOURCE_ID_TIME_DIGIT_FIVE,
-	RESOURCE_ID_TIME_DIGIT_SIX,
-	RESOURCE_ID_TIME_DIGIT_SEVEN,
-	RESOURCE_ID_TIME_DIGIT_EIGHT,
-	RESOURCE_ID_TIME_DIGIT_NINE,
-};
+/* Called by the graphics layers when the time layer needs to be updated.
+*/
+void time_layer_update_proc(TimeLayer *tl, GContext* ctx)
+{
+    if (tl->background_color != GColorClear)
+    {
+        graphics_context_set_fill_color(ctx, tl->background_color);
+        graphics_fill_rect(ctx, tl->layer.bounds, 0, GCornerNone);
+    }
+    graphics_context_set_text_color(ctx, tl->text_color);
 
-// Unhelpfully, our images are not all the same size.
-static GSize DIGIT_SIZES[10] = {
-	{35, 78},
-	{17, 76},
-	{35, 75},
-	{34, 76},
-	{35, 75},
-	{33, 76},
-	{32, 76},
-	{34, 75},
-	{33, 76},
-	{33, 77}
-};
-// This is easier than trying to calculate them on the fly.
-static uint8_t SLOT_POSITIONS[] = {0, 19, 71, 108};
+    if (tl->hour_text && tl->minute_text)
+    {
+        GSize hour_sz =
+            graphics_text_layout_get_max_used_size(ctx,
+                                                   tl->hour_text,
+                                                   tl->hour_font,
+                                                   tl->layer.bounds,
+                                                   tl->overflow_mode,
+                                                   GTextAlignmentLeft,
+                                                   tl->layout_cache);
+        GSize minute_sz =
+            graphics_text_layout_get_max_used_size(ctx,
+                                                   tl->minute_text,
+                                                   tl->minute_font,
+                                                   tl->layer.bounds,
+                                                   tl->overflow_mode,
+                                                   GTextAlignmentLeft,
+                                                   tl->layout_cache);
+        int width = minute_sz.w + hour_sz.w;
+        int half = tl->layer.bounds.size.w / 2;
+        GRect hour_bounds = tl->layer.bounds;
+        GRect minute_bounds = tl->layer.bounds;
 
-static void time_layer_set_slot_digit(TimeLayer* time_layer, uint8_t slot, int8_t digit);
-static void time_layer_draw_backing(Layer* layer, GContext *ctx);
+        hour_bounds.size.w = half - (width / 2) + hour_sz.w;
+        minute_bounds.origin.x = hour_bounds.size.w + 1;
+        minute_bounds.size.w = minute_sz.w;
 
-void time_layer_init(TimeLayer* time_layer, GPoint top_left) {
-	// Root layer with black background.
-	GRect frame = GRect(top_left.x, top_left.y, 144, 100);
-	layer_init(&time_layer->layer, frame);
-	time_layer->layer.update_proc = time_layer_draw_backing;
-	
-	// Set up our colon
-	bmp_init_container(RESOURCE_ID_TIME_COLON, &time_layer->colon_layer);
-	layer_set_frame(&time_layer->colon_layer.layer.layer, GRect(56, 37, 13, 52));
-	layer_add_child(&time_layer->layer, &time_layer->colon_layer.layer.layer);
-	
-	for(int i = 0; i < 4; ++i)
-		time_layer->layer_states[i] = -1;
+        graphics_text_draw(ctx,
+                           tl->hour_text,
+                           tl->hour_font,
+                           hour_bounds,
+                           tl->overflow_mode,
+                           GTextAlignmentRight,
+                           tl->layout_cache);
+        graphics_text_draw(ctx,
+                           tl->minute_text,
+                           tl->minute_font,
+                           minute_bounds,
+                           tl->overflow_mode,
+                           GTextAlignmentLeft,
+                           tl->layout_cache);
+    }
 }
 
-void time_layer_set_time(TimeLayer* time_layer, PblTm time) {
-	int hours = time.tm_hour % 12; // We can only do 24-hour due to space constraints.
-	if(hours == 0) hours = 12;
-	time_layer_set_slot_digit(time_layer, 0, hours / 10);
-	time_layer_set_slot_digit(time_layer, 1, hours % 10);
-	time_layer_set_slot_digit(time_layer, 2, time.tm_min / 10);
-	time_layer_set_slot_digit(time_layer, 3, time.tm_min % 10);
+
+/* Set the hour and minute text and mark the layer dirty. NOTE that the
+* two strings must be static because we're only storing a pointer to them,
+* not making a copy.
+*/
+void time_layer_set_text(TimeLayer *tl, char *hour_text, char *minute_text)
+{
+    tl->hour_text = hour_text;
+    tl->minute_text = minute_text;
+
+    layer_mark_dirty(&(tl->layer));
 }
 
-void time_layer_deinit(TimeLayer* time_layer) {
-	for(int i = 0; i < 4; ++i) {
-		if(time_layer->layer_states[i] != -1) {
-			bmp_deinit_container(&time_layer->digit_layers[i]);
-		}
-	}
-	bmp_deinit_container(&time_layer->colon_layer);
+
+/* Set the time fonts. Hour and minute fonts can be different.
+*/
+void time_layer_set_fonts(TimeLayer *tl, GFont hour_font, GFont minute_font)
+{
+    tl->hour_font = hour_font;
+    tl->minute_font = minute_font;
+
+    if (tl->hour_text && tl->minute_text)
+    {
+        layer_mark_dirty(&(tl->layer));
+    }
 }
 
-static void time_layer_draw_backing(Layer* layer, GContext *ctx) {
-	graphics_context_set_fill_color(ctx, GColorBlack);
-	graphics_fill_rect(ctx, layer->bounds, 0, GCornerNone);
+
+/* Set the text color of the time layer.
+*/
+void time_layer_set_text_color(TimeLayer *tl, GColor color)
+{
+    tl->text_color = color;
+
+    if (tl->hour_text && tl->minute_text)
+    {
+        layer_mark_dirty(&(tl->layer));
+    }
 }
 
-static void time_layer_set_slot_digit(TimeLayer* time_layer, uint8_t slot, int8_t digit) {
-	// No need to update it if we already have the right digit.
-	if(time_layer->layer_states[slot] == digit) return;
-	if(time_layer->layer_states[slot] != -1) {
-		layer_remove_from_parent(&time_layer->digit_layers[slot].layer.layer);
-		bmp_deinit_container(&time_layer->digit_layers[slot]);
-		time_layer->layer_states[slot] = -1;
-	}
-	// Out of bounds digits are bad.
-	if(digit < 0 || digit > 9) return;
-	// We don't render the first digit if it's zero.
-	if(!(slot == 0 && digit == 0)) {
-		bmp_init_container(DIGIT_RESOURCES[digit], &time_layer->digit_layers[slot]);
-		uint8_t height = DIGIT_SIZES[digit].h;
-		uint8_t width = DIGIT_SIZES[digit].w;
-		int h_offset = 0;
-		if(slot != 0) {
-			h_offset = (35 - width) / 2;
-		}
-		layer_set_frame(&time_layer->digit_layers[slot].layer.layer, GRect(SLOT_POSITIONS[slot] + h_offset, 10 + 79 - height, width, height));
-		layer_add_child(&time_layer->layer, &time_layer->digit_layers[slot].layer.layer);
-		time_layer->layer_states[slot] = digit;
-	}
+
+/* Set the background color of the time layer.
+*/
+void time_layer_set_background_color(TimeLayer *tl, GColor color)
+{
+    tl->background_color = color;
+
+    if (tl->hour_text && tl->minute_text)
+    {
+        layer_mark_dirty(&(tl->layer));
+    }
+}
+
+
+/* Initialize the time layer with default colors and fonts.
+*/
+void time_layer_init(TimeLayer *tl, GRect frame)
+{
+    layer_init(&tl->layer, frame);
+    tl->layer.update_proc = (LayerUpdateProc)time_layer_update_proc;
+    tl->text_color = GColorWhite;
+    tl->background_color = GColorClear;
+    tl->overflow_mode = GTextOverflowModeWordWrap;
+
+    tl->hour_font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
+    tl->minute_font = tl->hour_font;
 }
