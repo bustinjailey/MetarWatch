@@ -10,19 +10,17 @@
 
 #define MY_UUID { 0x91, 0x41, 0xB6, 0x28, 0xBC, 0x89, 0x49, 0x8E, 0xB1, 0x47, 0x04, 0x9F, 0x49, 0xC0, 0x99, 0xAD }
 PBL_APP_INFO(MY_UUID,
-             "Weather Watch", "Katharine Berry",
+             "Metar Watch", "Justin Bailey",
              1, 0, /* App version */
              DEFAULT_MENU_ICON,
              APP_INFO_WATCH_FACE);
 
 // POST variables
-#define WEATHER_KEY_LATITUDE 1
-#define WEATHER_KEY_LONGITUDE 2
-#define WEATHER_KEY_UNIT_SYSTEM 3
-// Received variables
-#define WEATHER_KEY_CURRENT 1
-#define WEATHER_KEY_PRECIPITATION 3
+#define LATITUDE_KEY 1
+#define LONGITUDE_KEY 2
 
+// Received variables
+#define METAR_RESULT_KEY 1
 #define WEATHER_HTTP_COOKIE 1949327671
 
 static Window window;
@@ -35,18 +33,17 @@ static bool located;
 static uint8_t precip_forecast[60];
 static int8_t precip_forecast_index;
 
-void request_weather();
+void request_metar();
 void handle_timer(AppContextRef app_ctx, AppTimerHandle handle, uint32_t cookie);
 
 void failed(int32_t cookie, int http_status, void* context) {
-	if(cookie == 0 || cookie == WEATHER_HTTP_COOKIE) {
+	if(cookie == 0) {
 		weather_layer_set_icon(&weather_layer, WEATHER_ICON_NO_WEATHER);
 	}
 }
 
 void success(int32_t cookie, int http_status, DictionaryIterator* received, void* context) {
-	if(cookie != WEATHER_HTTP_COOKIE) return;
-	Tuple* data_tuple = dict_find(received, WEATHER_KEY_CURRENT);
+	Tuple* data_tuple = dict_find(received, METAR_RESULT_KEY);
 	if(data_tuple) {
 		// The below bitwise dance is so we can actually fit our precipitation forecast.
 		uint16_t value = data_tuple->value->int16;
@@ -73,7 +70,7 @@ void success(int32_t cookie, int http_status, DictionaryIterator* received, void
 }
 
 void reconnect(void* context) {
-	request_weather();
+	request_metar();
 }
 
 void handle_tick(AppContextRef app_ctx, PebbleTickEvent *event) {
@@ -98,13 +95,13 @@ void location(float latitude, float longitude, float altitude, float accuracy, v
 	our_latitude = latitude * 10000;
 	our_longitude = longitude * 10000;
 	located = true;
-	request_weather();
+	request_metar();
 	set_timer((AppContextRef)context);
 }
 
 void handle_init(AppContextRef ctx) {
 	resource_init_current_app(&APP_RESOURCES);
-	window_init(&window, "Weather Watch");
+	window_init(&window, "Metar Watch");
 	window_stack_push(&window, true /* Animated */);
 	window_set_fullscreen(&window, true);
 	
@@ -129,7 +126,7 @@ void handle_init(AppContextRef ctx) {
 	// Request weather
 	precip_forecast_index = -1;
 	located = false;
-	request_weather();
+	request_metar();
 }
 
 void handle_deinit(AppContextRef ctx) {
@@ -158,27 +155,27 @@ void pbl_main(void *params) {
 }
 
 void handle_timer(AppContextRef ctx, AppTimerHandle handle, uint32_t cookie) {
-	request_weather();
+	request_metar();
 	// Update again in fifteen minutes.
 	if(cookie)
 		set_timer(ctx);
 }
 
-void request_weather() {
+void request_metar() {
 	if(!located) {
 		http_location_request();
 		return;
 	}
 	// Build the HTTP request
 	DictionaryIterator *body;
-	HTTPResult result = http_out_get("http://pwdb.kathar.in/pebble/weather3.php", WEATHER_HTTP_COOKIE, &body);
+	HTTPResult result = http_out_get("http://bustinjailey-metar.herokuapp.com/", WEATHER_HTTP_COOKIE, &body);
 	if(result != HTTP_OK) {
 		weather_layer_set_icon(&weather_layer, WEATHER_ICON_NO_WEATHER);
 		return;
 	}
-	dict_write_int32(body, WEATHER_KEY_LATITUDE, our_latitude);
-	dict_write_int32(body, WEATHER_KEY_LONGITUDE, our_longitude);
-	dict_write_cstring(body, WEATHER_KEY_UNIT_SYSTEM, UNIT_SYSTEM);
+	dict_write_int32(body, LATITUDE_KEY, our_latitude);
+	dict_write_int32(body, LONGITUDE_KEY, our_longitude);
+
 	// Send it.
 	if(http_out_send() != HTTP_OK) {
 		weather_layer_set_icon(&weather_layer, WEATHER_ICON_NO_WEATHER);
