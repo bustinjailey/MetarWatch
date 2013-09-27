@@ -5,7 +5,7 @@
 #include "http.h"
 #include "util.h"
 #include "time_layer.h"
-#include "weather_layer.h"
+#include "metar_layer.h"
 #include "config.h"
 
 #define MY_UUID { 0x91, 0x41, 0xB6, 0x28, 0xBC, 0x89, 0x49, 0x8E, 0xB1, 0x47, 0x04, 0x9F, 0x49, 0xC0, 0x99, 0xAD }
@@ -21,24 +21,21 @@ PBL_APP_INFO(MY_UUID,
 
 // Received variables
 #define METAR_RESULT_KEY 1
-#define WEATHER_HTTP_COOKIE 1949327671
+#define HTTP_COOKIE 1949327671
 
 static Window window;
 static TimeLayer time_layer;
-static WeatherLayer weather_layer;
+static MetarLayer metar_layer;
 
 static int our_latitude, our_longitude;
 static bool located;
-
-static uint8_t precip_forecast[60];
-static int8_t precip_forecast_index;
 
 void request_metar();
 void handle_timer(AppContextRef app_ctx, AppTimerHandle handle, uint32_t cookie);
 
 void failed(int32_t cookie, int http_status, void* context) {
 	if(cookie == 0) {
-		weather_layer_set_icon(&weather_layer, WEATHER_ICON_NO_WEATHER);
+		metar_layer_display_errortext(&metar_layer);
 	}
 }
 
@@ -46,26 +43,8 @@ void success(int32_t cookie, int http_status, DictionaryIterator* received, void
 	Tuple* data_tuple = dict_find(received, METAR_RESULT_KEY);
 	if(data_tuple) {
 		// The below bitwise dance is so we can actually fit our precipitation forecast.
-		uint16_t value = data_tuple->value->int16;
-		uint8_t icon = value >> 11;
-		if(icon < 10) {
-			weather_layer_set_icon(&weather_layer, icon);
-		} else {
-			weather_layer_set_icon(&weather_layer, WEATHER_ICON_NO_WEATHER);
-		}
-		int16_t temp = value & 0x3ff;
-		if(value & 0x400) temp = -temp;
-		weather_layer_set_temperature(&weather_layer, temp);
-	}
-	Tuple* forecast_tuple = dict_find(received, WEATHER_KEY_PRECIPITATION);
-	if(forecast_tuple) {
-		// It's going to rain!
-		memset(precip_forecast, 0, 60);
-		memcpy(precip_forecast, forecast_tuple->value->data, forecast_tuple->length > 60 ? 60 : forecast_tuple->length);
-		precip_forecast_index = 0;
-		weather_layer_set_precipitation_forecast(&weather_layer, precip_forecast, 60);
-	} else {
-		weather_layer_clear_precipitation_forecast(&weather_layer);
+		char* value = data_tuple->value;
+		metar_layer_set_text(&weather_layer, *value);
 	}
 }
 
@@ -75,15 +54,6 @@ void reconnect(void* context) {
 
 void handle_tick(AppContextRef app_ctx, PebbleTickEvent *event) {
 	time_layer_set_time(&time_layer, *(event->tick_time));
-	if(precip_forecast_index >= 0) {
-		++precip_forecast_index;
-		if(precip_forecast_index > 60) {
-			weather_layer_clear_precipitation_forecast(&weather_layer);
-			precip_forecast_index = -1;
-		} else {
-			weather_layer_set_precipitation_forecast(&weather_layer, &precip_forecast[precip_forecast_index], 60 - precip_forecast_index);
-		}
-	}
 }
 
 void set_timer(AppContextRef ctx) {
@@ -112,9 +82,9 @@ void handle_init(AppContextRef ctx) {
 	PblTm time;
 	get_time(&time);
 	time_layer_set_time(&time_layer, time);
-	// Add weather layer
-	weather_layer_init(&weather_layer, GPoint(0, 100));
-	layer_add_child(&window.layer, &weather_layer.layer);
+	// Add metar layer
+	metar_layer_init(&metar_layer, GPoint(0, 100));
+	layer_add_child(&window.layer, &metar_layer.layer);
 	
 	http_register_callbacks((HTTPCallbacks){
 		.failure=failed,
@@ -124,16 +94,14 @@ void handle_init(AppContextRef ctx) {
 	}, (void*)ctx);
 	
 	// Request weather
-	precip_forecast_index = -1;
 	located = false;
 	request_metar();
 }
 
 void handle_deinit(AppContextRef ctx) {
 	time_layer_deinit(&time_layer);
-	weather_layer_deinit(&weather_layer);
+	metar_layer_deinit(&metar_layer);
 }
-
 
 void pbl_main(void *params) {
 	PebbleAppHandlers handlers = {
@@ -168,9 +136,9 @@ void request_metar() {
 	}
 	// Build the HTTP request
 	DictionaryIterator *body;
-	HTTPResult result = http_out_get("http://bustinjailey-metar.herokuapp.com/", WEATHER_HTTP_COOKIE, &body);
+	HTTPResult result = http_out_get("http://bustinjailey-metar.herokuapp.com/", HTTP_COOKIE, &body);
 	if(result != HTTP_OK) {
-		weather_layer_set_icon(&weather_layer, WEATHER_ICON_NO_WEATHER);
+		metar_layer_display_errortext(&metar_layer);
 		return;
 	}
 	dict_write_int32(body, LATITUDE_KEY, our_latitude);
@@ -178,7 +146,7 @@ void request_metar() {
 
 	// Send it.
 	if(http_out_send() != HTTP_OK) {
-		weather_layer_set_icon(&weather_layer, WEATHER_ICON_NO_WEATHER);
+		metar_layer_display_errortext(&metar_layer);
 		return;
 	}
 }
