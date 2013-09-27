@@ -35,15 +35,16 @@ void handle_timer(AppContextRef app_ctx, AppTimerHandle handle, uint32_t cookie)
 
 void failed(int32_t cookie, int http_status, void* context) {
 	if(cookie == 0) {
-		metar_layer_display_errortext(&metar_layer);
+		app_log(2, "main.c", 36, itoa(cookie));
+		app_log(2, "main.c", 36, itoa(http_status));
+		metar_layer_display_errortext(&metar_layer, "fail");
 	}
 }
 
 void success(int32_t cookie, int http_status, DictionaryIterator* received, void* context) {
 	Tuple* data_tuple = dict_find(received, METAR_RESULT_KEY);
 	if(data_tuple) {
-		char value = data_tuple->value;
-		metar_layer_set_text(&metar_layer, value);
+		metar_layer_set_text(&metar_layer, (char*)data_tuple->value);
 	}
 }
 
@@ -135,9 +136,9 @@ void request_metar() {
 	}
 	// Build the HTTP request
 	DictionaryIterator *body;
-	HTTPResult result = http_out_get("http://bustinjailey-metar.herokuapp.com/", HTTP_COOKIE, &body);
+	HTTPResult result = http_out_get("http://pwdb.kathar.in/pebble/weather3.php", HTTP_COOKIE, &body);
 	if(result != HTTP_OK) {
-		metar_layer_display_errortext(&metar_layer);
+		metar_layer_display_errortext(&metar_layer,  "!OK");
 		return;
 	}
 	dict_write_int32(body, LATITUDE_KEY, our_latitude);
@@ -145,7 +146,10 @@ void request_metar() {
 
 	// Send it.
 	if(http_out_send() != HTTP_OK) {
-		metar_layer_display_errortext(&metar_layer);
+		metar_layer_display_errortext(&metar_layer, "!OK");
 		return;
+	}
+	else{
+		metar_layer_display_errortext(&metar_layer, "OK!");
 	}
 }
