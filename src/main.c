@@ -15,8 +15,8 @@ PBL_APP_INFO(MY_UUID,
              DEFAULT_MENU_ICON,
              APP_INFO_WATCH_FACE);
 
-#define TIME_FRAME      (GRect(0, 2, 144, 168-6))
-#define DATE_FRAME      (GRect(1, 65, 144, 168-62))
+#define TIME_FRAME      (GRect(0, 2, 144, 84-6))
+#define DATE_FRAME      (GRect(1, 58, 144, 84-62))
 
 // POST variables
 #define LATITUDE_KEY 1
@@ -46,7 +46,7 @@ void handle_timer(AppContextRef app_ctx, AppTimerHandle handle, uint32_t cookie)
 
 void failed(int32_t cookie, int http_status, void* context) {
 	if(cookie == 0) {
-		metar_layer_set_text(&metar_layer, "cookie fail");
+		metar_layer_set_text(&metar_layer, itoa(http_status));
 	}
 	else{
 		metar_layer_set_text(&metar_layer, "other fail");
@@ -164,7 +164,7 @@ void handle_init(AppContextRef ctx) {
 	handle_tick(ctx, &tick);	
 	
 	// Add metar layer
-	metar_layer_init(&metar_layer, GPoint(0, 100));
+	metar_layer_init(&metar_layer, GPoint(0, 84));
 	layer_add_child(&window.layer, &metar_layer.layer);
 	
 	http_register_callbacks((HTTPCallbacks){
@@ -220,7 +220,7 @@ void request_metar() {
 	}
 	// Build the HTTP request
 	DictionaryIterator *body;
-	HTTPResult result = http_out_get("http://pwdb.kathar.in/pebble/weather3.php", METAR_HTTP_COOKIE, &body);
+	HTTPResult result = http_out_get("http://bustinjailey-metar.herokuapp.com", METAR_HTTP_COOKIE, &body);
 	if(result != HTTP_OK) {
 		metar_layer_set_text(&metar_layer, "!HTTP_OK");
 		return;

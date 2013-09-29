@@ -11,7 +11,7 @@ typedef struct {
 	uint8_t* forecast;
 	uint8_t forecast_count;
 	bool has_metar;
-	char metar_str[50];
+	char metar_str[90];
 } MetarLayer;
 
 void metar_layer_init(MetarLayer* metar_layer, GPoint pos);
