@@ -15,9 +15,6 @@ PBL_APP_INFO(MY_UUID,
              DEFAULT_MENU_ICON,
              APP_INFO_WATCH_FACE);
 
-// Entire screen size
-#define TOTAL_FRAME	(GRect(0, 0, 144, 168))
-
 // POST variables
 #define LATITUDE_KEY 1
 #define LONGITUDE_KEY 2
@@ -143,7 +140,8 @@ void handle_init(AppContextRef ctx) {
 	// Individual frame sizes
 	time_frame = (GRect(0, 2, TOTAL_FRAME.size.w, (TOTAL_FRAME.size.h)-6));
 	date_frame = (GRect(0, 58, TOTAL_FRAME.size.w, (TOTAL_FRAME.size.h)-62));
-	metar_frame = (GRect(0, 84, TOTAL_FRAME.size.w, (TOTAL_FRAME.size.h)/2));
+	// initialize metar_frame to be at bottom w/ height 0, resize based on content in text set function
+	metar_frame = (GRect(0, TOTAL_FRAME.size.h - METAR_MAX_Y_POS, TOTAL_FRAME.size.w, METAR_MAX_Y_POS));
 
 	// Add time layer
     time_layer_init(&time_layer, window.layer.frame);
@@ -172,7 +170,7 @@ void handle_init(AppContextRef ctx) {
 	
 	// Add metar layer
 	metar_layer_init(&metar_layer, metar_frame);
-	layer_add_child(&window.layer, &metar_layer.layer);
+	layer_add_child(&window.layer, (Layer*)&metar_layer.layer);
 	
 	http_register_callbacks((HTTPCallbacks){
 		.failure=failed,

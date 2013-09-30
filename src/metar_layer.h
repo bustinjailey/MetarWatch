@@ -5,11 +5,7 @@
 
 typedef struct {
 	Layer layer;
-	BmpContainer icon_layer;
 	TextLayer text_layer;
-	GraphLayer graph_layer;
-	uint8_t* forecast;
-	uint8_t forecast_count;
 	bool has_metar;
 	char metar_str[90];
 } MetarLayer;
