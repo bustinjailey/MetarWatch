@@ -15,9 +15,6 @@ PBL_APP_INFO(MY_UUID,
              DEFAULT_MENU_ICON,
              APP_INFO_WATCH_FACE);
 
-#define TIME_FRAME      (GRect(0, 2, 144, 84-6))
-#define DATE_FRAME      (GRect(1, 58, 144, 84-62))
-
 // POST variables
 #define LATITUDE_KEY 1
 #define LONGITUDE_KEY 2
@@ -37,9 +34,11 @@ GFont font_hour;
 GFont font_minute;
 
 static int initial_minute;
-
 static int our_latitude, our_longitude;
 static bool located;
+static GRect time_frame;
+static GRect date_frame;
+static GRect metar_frame;
 
 void request_metar();
 void handle_timer(AppContextRef app_ctx, AppTimerHandle handle, uint32_t cookie);
@@ -137,13 +136,19 @@ void handle_init(AppContextRef ctx) {
     font_date = fonts_load_custom_font(res_d);
     font_hour = fonts_load_custom_font(res_h);
     font_minute = fonts_load_custom_font(res_h);
+	
+	// Individual frame sizes
+	time_frame = (GRect(0, 2, TOTAL_FRAME.size.w, (TOTAL_FRAME.size.h)-6));
+	date_frame = (GRect(0, 58, TOTAL_FRAME.size.w, (TOTAL_FRAME.size.h)-62));
+	// try setting to full screen, resizing in set text function
+	metar_frame = (GRect(0, 0, TOTAL_FRAME.size.w, TOTAL_FRAME.size.h));
 
 	// Add time layer
     time_layer_init(&time_layer, window.layer.frame);
     time_layer_set_text_color(&time_layer, GColorWhite);
     time_layer_set_background_color(&time_layer, GColorClear);
     time_layer_set_fonts(&time_layer, font_hour, font_minute);
-    layer_set_frame(&time_layer.layer, TIME_FRAME);
+    layer_set_frame(&time_layer.layer, time_frame);
     layer_add_child(&window.layer, &time_layer.layer);
 
 	// Add date text layer
@@ -152,7 +157,7 @@ void handle_init(AppContextRef ctx) {
     text_layer_set_background_color(&date_layer, GColorClear);
     text_layer_set_font(&date_layer, font_date);
     text_layer_set_text_alignment(&date_layer, GTextAlignmentCenter);
-    layer_set_frame(&date_layer.layer, DATE_FRAME);
+    layer_set_frame(&date_layer.layer, date_frame);
     layer_add_child(&window.layer, &date_layer.layer);
 
 	// Set initial time.
@@ -161,11 +166,11 @@ void handle_init(AppContextRef ctx) {
     tick.tick_time = &time;
     tick.units_changed = SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT;
 	initial_minute = (time.tm_min % 30);
-	handle_tick(ctx, &tick);	
+	handle_tick(ctx, &tick);
 	
 	// Add metar layer
-	metar_layer_init(&metar_layer, GPoint(0, 84));
-	layer_add_child(&window.layer, &metar_layer.layer);
+	metar_layer_init(&metar_layer, metar_frame);
+	layer_add_child(&window.layer, (Layer*)&metar_layer.layer);
 	
 	http_register_callbacks((HTTPCallbacks){
 		.failure=failed,

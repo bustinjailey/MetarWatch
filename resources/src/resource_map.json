@@ -7,14 +7,37 @@
         },
         {
             "trackingAdjust": 3,
-            "characterRegex": "[0-9adeFhiMnorSTtuW ]",
-            "defName": "FUTURA_18",
+            "defName": "FUTURA_26",
+            "type": "font",
+            "file": "fonts/futura.ttf"
+        },
+        {
+            "trackingAdjust": 3,
+            "defName": "FUTURA_22",
+            "type": "font",
+            "file": "fonts/futura.ttf"
+        },
+        {
+            "trackingAdjust": 3,
+            "defName": "FUTURA_16",
+            "type": "font",
+            "file": "fonts/futura.ttf"
+        },
+        {
+            "trackingAdjust": 3,
+            "defName": "FUTURA_14",
             "type": "font",
             "file": "fonts/futura.ttf"
         },
         {
             "trackingAdjust": 3,
             "defName": "FUTURA_13",
+            "type": "font",
+            "file": "fonts/futura.ttf"
+        },
+        {
+            "trackingAdjust": 3,
+            "defName": "FUTURA_18",
             "type": "font",
             "file": "fonts/futura.ttf"
         },
