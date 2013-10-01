@@ -5,7 +5,6 @@
 #include "metar_layer.h"
 #include "config.h"
 
-static int current_font_index = 0;
 static int font_options[] = {RESOURCE_ID_FUTURA_13, RESOURCE_ID_FUTURA_14, RESOURCE_ID_FUTURA_16, RESOURCE_ID_FUTURA_18, RESOURCE_ID_FUTURA_22, RESOURCE_ID_FUTURA_26};
 static int font_options_count = sizeof(font_options) / sizeof(font_options[0]);
 
@@ -15,7 +14,6 @@ void metar_layer_init(MetarLayer* metar_layer, GRect frame) {
 	// Add text layer
 	text_layer_init(&metar_layer->text_layer, GRect(0, 0, frame.size.w, frame.size.h));
 	text_layer_set_text_alignment(&metar_layer->text_layer, GTextAlignmentCenter);
-	set_text_size_from_index(metar_layer, current_font_index);
 	layer_add_child(&metar_layer->layer, &metar_layer->text_layer.layer);
 }
 
@@ -32,7 +30,8 @@ void set_text_size_from_index(MetarLayer* metar_layer, int index){
 
 void maximize_font_and_frame_size(MetarLayer* metar_layer){
 	GContext* ctx = app_get_current_graphics_context();
-	current_font_index = 0;
+	int current_font_index = 0;
+	set_text_size_from_index(metar_layer, current_font_index);
 	// Fit layer to text at default font size
 	metar_layer_fit_to_text(ctx, metar_layer);
 	// Get layer size after resize
