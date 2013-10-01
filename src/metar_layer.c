@@ -32,14 +32,29 @@ void set_text_size_from_index(MetarLayer* metar_layer, int index){
 
 void maximize_font_and_frame_size(MetarLayer* metar_layer){
 	GContext* ctx = app_get_current_graphics_context();
+	current_font_index = 0;
+	// Fit layer to text at default font size
 	metar_layer_fit_to_text(ctx, metar_layer);
+	// Get layer size after resize
+	GRect layer_frame = layer_get_frame(&metar_layer->layer);
 	
-	// 1. increase font size by one	
-	// 2. fit metar_layer->layer to text_layer
-	// 3. check if size of metar_layer is still under max size determined by METAR_MAX_Y_POS
-	// 4. if yes, increase size one more time
-	
-	// add the frame size stuff here!
+	// If size is less than the max, try to increase it
+	while (current_font_index < font_options_count &&
+		   layer_frame.origin.y > METAR_MAX_Y_POS &&
+		   layer_frame.size.h < METAR_MAX_Y_POS){
+		// try to increase
+		set_text_size_from_index(metar_layer, ++current_font_index);
+		// resize again
+		metar_layer_fit_to_text(ctx, metar_layer);
+		// Get layer size after resize
+		layer_frame = layer_get_frame(&metar_layer->layer);
+	}
+
+	if(current_font_index > 0){
+		// While loop usually overshoots the font size by one, 
+		set_text_size_from_index(metar_layer, --current_font_index);
+		metar_layer_fit_to_text(ctx, metar_layer);
+	}
 }
 
 void metar_layer_fit_to_text(GContext* ctx, MetarLayer* metar_layer) {

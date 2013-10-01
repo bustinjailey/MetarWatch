@@ -140,8 +140,8 @@ void handle_init(AppContextRef ctx) {
 	// Individual frame sizes
 	time_frame = (GRect(0, 2, TOTAL_FRAME.size.w, (TOTAL_FRAME.size.h)-6));
 	date_frame = (GRect(0, 58, TOTAL_FRAME.size.w, (TOTAL_FRAME.size.h)-62));
-	// initialize metar_frame to be at bottom w/ height 0, resize based on content in text set function
-	metar_frame = (GRect(0, TOTAL_FRAME.size.h - METAR_MAX_Y_POS, TOTAL_FRAME.size.w, METAR_MAX_Y_POS));
+	// try setting to full screen, resizing in set text function
+	metar_frame = (GRect(0, 0, TOTAL_FRAME.size.w, TOTAL_FRAME.size.h));
 
 	// Add time layer
     time_layer_init(&time_layer, window.layer.frame);
