@@ -111,9 +111,9 @@ void time_layer_set_background_color(TimeLayer *tl, GColor color)
 
 /* Initialize the time layer with default colors and fonts.
 */
-void time_layer_init(TimeLayer *tl, GRect frame)
+TimeLayer time_layer_create(TimeLayer *tl, GRect frame)
 {
-    layer_init(&tl->layer, frame);
+    layer_create(frame);
     tl->layer.update_proc = (LayerUpdateProc)time_layer_update_proc;
     tl->text_color = GColorWhite;
     tl->background_color = GColorClear;

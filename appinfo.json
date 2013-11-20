@@ -1,0 +1,115 @@
+{
+    "versionLabel": "2.0",
+    "uuid": "47e8aa2f-1972-472d-b3b1-1acbb2c5f7f6",
+    "appKeys": {},
+    "longName": "MetarWatch",
+    "versionCode": 1,
+    "capabilities": [
+        "location"
+    ],
+    "shortName": "MetarWatch",
+    "companyName": "bustinjailey",
+    "watchapp": {
+        "watchface": true
+    },
+    "resources": {
+        "media": [
+            {
+                "type": "png",
+                "name": "TIME_COLON",
+                "file": "images/colon.png"
+            },
+            {
+                "type": "png",
+                "name": "TIME_DIGIT_NINE",
+                "file": "images/9.png"
+            },
+            {
+                "type": "png",
+                "name": "TIME_DIGIT_EIGHT",
+                "file": "images/8.png"
+            },
+            {
+                "type": "png",
+                "name": "TIME_DIGIT_SEVEN",
+                "file": "images/7.png"
+            },
+            {
+                "type": "png",
+                "name": "TIME_DIGIT_SIX",
+                "file": "images/6.png"
+            },
+            {
+                "type": "png",
+                "name": "TIME_DIGIT_FIVE",
+                "file": "images/5.png"
+            },
+            {
+                "type": "png",
+                "name": "TIME_DIGIT_FOUR",
+                "file": "images/4.png"
+            },
+            {
+                "type": "png",
+                "name": "TIME_DIGIT_THREE",
+                "file": "images/3.png"
+            },
+            {
+                "type": "png",
+                "name": "TIME_DIGIT_TWO",
+                "file": "images/2.png"
+            },
+            {
+                "type": "png",
+                "name": "TIME_DIGIT_ONE",
+                "file": "images/1.png"
+            },
+            {
+                "type": "png",
+                "name": "TIME_DIGIT_ZERO",
+                "file": "images/0.png"
+            },
+            {
+                "trackingAdjust": 3,
+                "type": "font",
+                "name": "FUTURA_26",
+                "file": "fonts/futura.ttf"
+            },
+            {
+                "trackingAdjust": 3,
+                "type": "font",
+                "name": "FUTURA_22",
+                "file": "fonts/futura.ttf"
+            },
+            {
+                "trackingAdjust": 3,
+                "type": "font",
+                "name": "FUTURA_16",
+                "file": "fonts/futura.ttf"
+            },
+            {
+                "trackingAdjust": 3,
+                "type": "font",
+                "name": "FUTURA_14",
+                "file": "fonts/futura.ttf"
+            },
+            {
+                "trackingAdjust": 3,
+                "type": "font",
+                "name": "FUTURA_13",
+                "file": "fonts/futura.ttf"
+            },
+            {
+                "trackingAdjust": 3,
+                "type": "font",
+                "name": "FUTURA_18",
+                "file": "fonts/futura.ttf"
+            },
+            {
+                "type": "font",
+                "name": "FUTURA_CONDENSED_53",
+                "file": "fonts/futura_condensed_bold-webfont.ttf"
+            }
+        ]
+    }
+}

@@ -1,6 +1,4 @@
-#include "pebble_os.h"
-#include "pebble_app.h"
-#include "pebble_fonts.h"
+#include <pebble.h>
 #include "util.h"
 #include "metar_layer.h"
 #include "config.h"
@@ -8,11 +6,11 @@
 static int font_options[] = {RESOURCE_ID_FUTURA_13, RESOURCE_ID_FUTURA_14, RESOURCE_ID_FUTURA_16, RESOURCE_ID_FUTURA_18, RESOURCE_ID_FUTURA_22, RESOURCE_ID_FUTURA_26};
 static int font_options_count = sizeof(font_options) / sizeof(font_options[0]);
 
-void metar_layer_init(MetarLayer* metar_layer, GRect frame) {
-	layer_init(&metar_layer->layer, frame);
+MetarLayer metar_layer_create(MetarLayer* metar_layer, GRect frame) {
+	layer_create(metar_layer->layer, frame);
 
 	// Add text layer
-	text_layer_init(&metar_layer->text_layer, GRect(0, 0, frame.size.w, frame.size.h));
+	text_layer_create(GRect(0, 0, frame.size.w, frame.size.h));
 	text_layer_set_text_alignment(&metar_layer->text_layer, GTextAlignmentCenter);
 	layer_add_child(&metar_layer->layer, &metar_layer->text_layer.layer);
 }
